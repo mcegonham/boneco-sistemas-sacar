@@ -1,0 +1,75 @@
+<meta charset="utf-8">
+<body style="background:#000;color:#0f0;font-family:monospace;text-align:center">
+
+<div id="boneco" style="font-size:80px; cursor:pointer;">🌀</div>
+<pre id="out"></pre>
+
+<div>
+  <div>23*34</div>
+  <div>100/5</div>
+  <div>50*50</div>
+</div>
+
+<script>
+const out = document.getElementById("out");
+const boneco = document.getElementById("boneco");
+
+// 1. MOTOR REAL: calcula expressões no DOM
+document.querySelectorAll("div").forEach(div=>{
+  if(/\d+[\+\-\*\/]\d+/.test(div.innerText)){
+    div.innerText = Function("return "+div.innerText)();
+  }
+});
+
+// 2. SCAN REAL no DOM
+function scanDOM(q){
+  return Array.from(document.querySelectorAll("div"))
+    .map(d=>d.innerText)
+    .filter(l=>l.includes(q))
+    .join("\n");
+}
+
+// 3. FUNÇÃO RECURSIVA PARA LER PASTA
+async function lerPasta(dirHandle, depth=0, maxDepth=3){
+  if(depth > maxDepth) return "";
+  let resultado = "";
+  for await(const entry of dirHandle.values()){
+    const prefix = "  ".repeat(depth);
+    if(entry.kind==="file"){
+      const file = await entry.getFile();
+      const texto = await file.text();
+      resultado += `${prefix}📄 ${entry.name}\n${texto}\n`;
+    } else if(entry.kind==="directory"){
+      resultado += `${prefix}📁 ${entry.name}\n`;
+      try{
+        const sub = await dirHandle.getDirectoryHandle(entry.name);
+        resultado += await lerPasta(sub, depth+1, maxDepth);
+      } catch(e){
+        resultado += `${prefix}📁 ${entry.name} (acesso negado)\n`;
+      }
+    }
+  }
+  return resultado;
+}
+
+// 4. CLIQUE NO BONECO: abre pasta e lê ficheiros
+boneco.onclick = async ()=>{
+  try{
+    const dirHandle = await window.showDirectoryPicker();
+    out.textContent = "🌀 A ler pasta...\n";
+    const texto = await lerPasta(dirHandle,0,3);
+    out.textContent = texto;
+
+    // Scan automático por "50"
+    const resultados = texto.split("\n").filter(l=>l.includes("50")).join("\n");
+    if(resultados) out.textContent += "\n⚡ DETEÇÃO NOS FICHEIROS:\n" + resultados;
+
+    // Scan no DOM também
+    const domResultados = scanDOM("50");
+    if(domResultados) out.textContent += "\n⚡ DETEÇÃO NO DOM:\n" + domResultados;
+
+  } catch(e){
+    out.textContent = "Permissão negada ou browser não suporta File System API";
+  }
+};
+</script>
