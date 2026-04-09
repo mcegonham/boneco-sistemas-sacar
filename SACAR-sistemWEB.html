@@ -1,0 +1,32 @@
+<meta charset="utf-8">
+<body style="background:#000;color:#0f0;font-family:monospace">
+
+🌀 Clique aqui para abrir a pasta
+
+<pre id="out"></pre>
+
+<script>
+const out = document.getElementById("out");
+
+document.body.onclick = async () => {
+  try {
+    const dirHandle = await window.showDirectoryPicker();
+    out.textContent = "A ler pasta...\n";
+
+    // Lê todos os ficheiros da pasta (profundidade 1)
+    let texto = "";
+    for await (const entry of dirHandle.values()) {
+      if (entry.kind === "file") {
+        const file = await entry.getFile();
+        texto += `--- ${entry.name} ---\n`;
+        texto += await file.text() + "\n";
+      }
+    }
+
+    out.textContent = texto || "A pasta está vazia ou não tem ficheiros de texto.";
+
+  } catch(e) {
+    out.textContent = "Permissão negada ou browser não suporta File System API";
+  }
+};
+</script>
