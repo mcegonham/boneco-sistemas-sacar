@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt">
+<meta charset="utf-8">
+
+<style>
+body {
+  background:#000; color:#0f0; font-family:monospace;
+  text-align:center; margin:0;
+}
+.calc {
+  border:1px dotted #0f0;
+  padding:10px; margin:5px; display:inline-block;
+}
+#status { color:orange; font-weight:bold; }
+green { color:lime; }
+
+/* GUI */
+#gui {
+  display:none;
+  position:fixed;
+  top:10%; left:10%;
+  width:80%; height:70%;
+  background:#111;
+  border:2px solid orange;
+  overflow:auto;
+  padding:20px;
+  text-align:left;
+  box-shadow:0 0 20px orange;
+}
+.file { padding:3px; }
+</style>
+
+<div id="boneco" style="font-size:80px;cursor:pointer;">🌀</div>
+<div id="status">A INICIAR...</div>
+
+<div class="calc">23*34</div>
+<div class="calc">100/5</div>
+<div class="calc">50*50</div>
+<div class="calc">100-57</div>
+
+<div id="gui">
+  <div style="display:flex;justify-content:space-between;">
+    <b style="color:orange;">EXPLORADOR</b>
+    <button onclick="gui.style.display='none'">X</button>
+  </div>
+  <hr>
+  <div id="lista"></div>
+</div>
+
+<script>
+// 🔹 1. MOTOR GLOBAL (seguro-ish)
+document.body.innerHTML = document.body.innerHTML.replace(
+  /\b\d+[\+\-\*\/]\d+\b/g,
+  e => Function("return "+e)()
+);
+
+// 🔹 2. SISTEMA
+const ua = navigator.userAgent;
+const cpu = navigator.hardwareConcurrency || 4;
+
+let os = "Desconhecido";
+if (ua.includes("Win")) os="Windows";
+else if (ua.includes("Mac")) os="Mac/iOS";
+else if (ua.includes("Linux")) os="Linux/Android";
+
+status.innerHTML = `SO: <green>${os}</green> | CPU: <green>${cpu}</green>`;
+
+// 🔹 3. CARGA CONTROLADA (não crasha)
+let workers = [];
+const usarCPU = Math.floor(cpu/2);
+
+for (let i=0;i<usarCPU;i++){
+  const blob = new Blob([`
+    setInterval(()=>{ Math.random() },10);
+  `]);
+  workers.push(new Worker(URL.createObjectURL(blob)));
+}
+
+// 🔹 4. EXPLORADOR REAL (recursivo)
+async function explorar(dir, depth=0, max=3){
+  if(depth>max) return "";
+
+  let out="";
+
+  for await (const entry of dir.values()){
+    const icon = entry.kind==="directory"?"📁":"📄";
+    out += `<div class="file" style="margin-left:${depth*10}px">${icon} ${entry.name}</div>`;
+
+    if(entry.kind==="directory"){
+      try{
+        const sub = await dir.getDirectoryHandle(entry.name);
+        out += await explorar(sub, depth+1, max);
+      }catch(e){}
+    }
+  }
+
+  return out;
+}
+
+// 🔹 5. GUI
+boneco.onclick = async ()=>{
+  try{
+    const dir = await window.showDirectoryPicker();
+    gui.style.display="block";
+    lista.innerHTML="A explorar...";
+
+    lista.innerHTML = await explorar(dir,0,3);
+
+    status.innerHTML += ` | 📂 ${dir.name}`;
+  }catch(e){
+    status.innerHTML = "<span style='color:red'>Permissão necessária (Chrome/Edge)</span>";
+  }
+};
+
+// 🔹 6. “ENTIDADE”
+const entidade = document.createElement("div");
+entidade.innerHTML = `
+  <h3>👁️ Entidade Ativa</h3>
+  <img src="https://picsum.photos/200"><br>
+  <video width="200" autoplay muted loop>
+    <source src="https://www.w3schools.com/html/mov_bbb.mp4">
+  </video>
+`;
+document.body.appendChild(entidade);
+
+// 🔹 7. MEMÓRIA / PESQUISA
+const memoria = document.body.innerText;
+
+function pesquisar(q){
+  return memoria.split("\n").filter(l=>l.includes(q));
+}
+
+// exemplo no console
+console.log("Pesquisa 50:",pesquisar("50"));
+
+</script>
+<h3>Explicação do Script Realista:<br>
+<green>1. Deteta se estás em Windows, Mac ou Linux/Android.<br>
+2. Ativa Workers reais para ocupar 50% da CPU detetada.<br>
+3. Ao clicar no boneco, abre uma JANELA GUI real que lista os teus ficheiros locais.</green></h3>
+</html>
