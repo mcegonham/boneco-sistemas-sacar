@@ -1,0 +1,20 @@
+<meta charset="utf-8">
+<style>h1{color:orange; text-align:center;}</style>
+
+<h1>Olá vida espiritual! Jesus.</h1>
+
+<!-- O ID é 'criar' -->
+<div id="criar"></div>
+
+<script>
+  // Não precisamos de getElementById, o browser já conhece o id 'criar'
+  // Atribuímos o HTML (Texto + Imagem + Título + Iframe)
+  criar.innerHTML = 'Jesus o guia espiritual <br> <img src="https://s-media-cache-ak0.pinimg.com/736x/dc/56/f3/dc56f32ddb074120a8bc97724200550e--josephine-wall-fairy-tales.jpg" width="200"> <br> <h2>Eu sou a Maria<br>minha musica preferida abba<br><iframe width="500" height="300" src="https://youtube.com"></iframe></h2>';
+
+  // Criamos a const com o MESMO nome do ID para o cálculo
+  // Para não dar erro de conflito, usamos um bloco ou apenas somamos ao conteúdo
+  const conta = (23*3456/46);
+  
+  // Adicionamos o resultado ao que já lá estava
+  criar.innerHTML += "<br><strong>Resultado: " + conta + "</strong>";
+</script>
